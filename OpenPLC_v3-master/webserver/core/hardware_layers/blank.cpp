@@ -29,11 +29,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
-
+#include <string>
 #include "ladder.h"
 #include "custom_layer.h"
-#include "cJSON.h"
-#include "tcp_spi.h"
+#include "../cJSON.h"`
+#include "../tcp_spi.h"
 #define SERVER_ADDR "192.168.211.128"
 #define SERVER_PORT "1502"
 #define MAX_ROWS 1024
@@ -70,7 +70,7 @@ int countNonZeroElements(IEC_BOOL arr[][MAX_COLS], int rows, int cols) {
     return count;
 }
 // 二维数组转稀疏数组的函数
-void toSparseArray(uint8_t original[][MAX_COLS], int rows, int cols, int sparse[][3]) {
+void toSparseArray(IEC_BOOL original[][MAX_COLS], int rows, int cols, int sparse[][3]) {
     int k = 1;  // 稀疏数组的行计数器，从1开始因为0行用于存储元数据
     sparse[0][0] = rows;
     sparse[0][1] = cols;
@@ -150,7 +150,7 @@ void updateBuffersIn()
 		log(log_msg);	
 	} else {
 		// printf("接收到消息:%s\n", recvBuf);
-		sprintf(log_msg, "组装JSON\n");
+		sprintf(log_msg, "解析JSON\n");
 		log(log_msg);	
 		cJSON *root = cJSON_Parse(recvBuf);
 		// 获取二维数组
