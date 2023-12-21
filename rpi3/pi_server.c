@@ -9,6 +9,8 @@ date:2020.4
 #include<unistd.h>
 #include <stdint.h>
 #include<pthread.h>
+#include <wiringPi.h>
+#include <wiringSerial.h>
 #include"tcp_spi.h"
 #include "cJSON.h"
 #define BUFFER_SIZE		1024
