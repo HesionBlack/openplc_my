@@ -141,7 +141,7 @@ void updateBuffersIn()
 
 	//堵塞接收
 	memset(recvBuf, 0, sizeof(recvBuf));//清空
-	recvBytes = tcp_blocking_rcv(sockfAd, recvBuf, sizeof(recvBuf));//堵塞接收
+	recvBytes = tcp_blocking_rcv(sockfd, recvBuf, sizeof(recvBuf));//堵塞接收
 	if (0 > recvBytes) {//接收失败
 		sprintf(log_msg, "接收失败\n");
 		log(log_msg);	
