@@ -53,6 +53,7 @@ pthread_mutex_t bufferLock; //mutex for the internal buffers
 
 
 void handleWriteAction(cJSON *root){
+	printf("远端向树莓派输入数据");
     cJSON* intOutput = cJSON_GetObjectItem(root, "int_output"); 
     int_output[0] = intOutput->valueint;
 
@@ -145,7 +146,7 @@ void updateBuffersOut()
 	for (int i = 0; i < MAX_OUTPUT; i++)
 	{
 	    if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), outBufferPinMask[i]))
-    		if (bool_output[i/8][i%8] != NULL) digitalWrite(outBufferPinMask[i], array[i/8][i%8]);
+    		if (array[i/8][i%8] != NULL) digitalWrite(outBufferPinMask[i], array[i/8][i%8]);
 	}
 
 	//ANALOG OUT (PWM)
@@ -171,7 +172,7 @@ int countNonZeroElements(int arr[MAX_ROWS][MAX_COLS], int rows, int cols) {
     return count;
 }
 // 计算非零元素数量的函数
-int countNonZeroElements(uint8_t arr[][MAX_COLS], int rows, int cols) {
+int countNonZeroElementsUint8(uint8_t arr[][MAX_COLS], int rows, int cols) {
     int count = 0;
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
@@ -183,7 +184,7 @@ int countNonZeroElements(uint8_t arr[][MAX_COLS], int rows, int cols) {
     return count;
 }
 char * handleReadAction(){
-    printf("handleReadAction be called");
+	printf("树莓派远端向传输数据");
     char  *json_str;
     // 创建JSON对象
     cJSON *root = cJSON_CreateObject();
