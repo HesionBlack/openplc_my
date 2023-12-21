@@ -141,7 +141,7 @@ void updateBuffersIn()
 	for (int i = 0; i < MAX_INPUT; i++)
 	{
 	    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), inBufferPinMask[i]))
-    		if (array[i/8][i%8] != NULL) array[i/8][i%8] = digitalRead(inBufferPinMask[i]);
+    		array[i/8][i%8] = digitalRead(inBufferPinMask[i]);
 	}
 
 	pthread_mutex_unlock(&bufferLock); //unlock mutex
@@ -161,14 +161,14 @@ void updateBuffersOut()
 	for (int i = 0; i < MAX_OUTPUT; i++)
 	{
 	    if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), outBufferPinMask[i]))
-    		if (array[i/8][i%8] != NULL) digitalWrite(outBufferPinMask[i], array[i/8][i%8]);
+    		digitalWrite(outBufferPinMask[i], array[i/8][i%8]);
 	}
 
 	//ANALOG OUT (PWM)
 	for (int i = 0; i < MAX_ANALOG_OUT; i++)
 	{
 	    if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), i))
-    		if (int_output[i] != NULL) pwmWrite(analogOutBufferPinMask[i], (int_output[i] / 64));
+    		pwmWrite(analogOutBufferPinMask[i], (int_output[i] / 64));
 	}
 
 	pthread_mutex_unlock(&bufferLock); //unlock mutex
