@@ -58,7 +58,7 @@ void toOriginalArray(int sparse[][3], int original[][MAX_COLS]) {
     }
 }
 // 计算非零元素数量的函数
-int countNonZeroElements(uint8_t arr[][MAX_COLS], int rows, int cols) {
+int countNonZeroElements(IEC_BOOL arr[][MAX_COLS], int rows, int cols) {
     int count = 0;
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
