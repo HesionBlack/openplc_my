@@ -90,6 +90,7 @@ void handleWriteAction(cJSON *root){
 //-----------------------------------------------------------------------------
 void initializeHardware()
 {
+	printf("初始化树莓派");
 	wiringPiSetup();
 	//piHiPri(99);
 
@@ -228,7 +229,7 @@ void *tcp_server_callBackFun(void *ptr)
 {
 	//int new_sockfd = (int *)ptr;//错误，不能直接使用地址，防止外部地址数值改变
 	int new_sockfd = *(int *)ptr;
-	
+	initializeHardware();
 	printf("开启线程服务处理客户端(new_sockfd=%d)\n", new_sockfd);
 	
 	char recv_buff[1024*10] = {0};
