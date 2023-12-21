@@ -104,7 +104,7 @@ elif [ "$OPENPLC_PLATFORM" = "linux" ]; then
     if [ "$OPENPLC_DRIVER" = "sl_rp4" ]; then
         g++ -std=gnu++11 *.cpp *.o -o openplc -I ./lib -pthread -fpermissive `pkg-config --cflags --libs libmodbus` -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w $ETHERCAT_INC -DSL_RP4
     else
-        g++ -std=gnu++11 cJSON.cpp tcp_spi.cpp *.cpp *.o -o openplc -I ./lib -pthread -fpermissive `pkg-config --cflags --libs libmodbus` -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w $ETHERCAT_INC
+        g++ -std=gnu++11 cJSON.c tcp_spi.c *.cpp *.o -o openplc -I ./lib -pthread -fpermissive `pkg-config --cflags --libs libmodbus` -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w $ETHERCAT_INC
     fi
     if [ $? -ne 0 ]; then
         echo "Error compiling C files"

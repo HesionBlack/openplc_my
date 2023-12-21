@@ -34,7 +34,7 @@
 #include "custom_layer.h"
 #include "../cJSON.h"
 #include "../tcp_spi.h"
-#define SERVER_ADDR "192.168.211.128"
+#define SERVER_ADDR "192.168.43.215"
 #define SERVER_PORT "1502"
 #define MAX_ROWS 1024
 #define MAX_COLS 8
