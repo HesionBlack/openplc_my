@@ -56,15 +56,15 @@ pthread_mutex_t bufferLock; //mutex for the internal buffers
 //-----------------------------------------------------------------------------
 // Verify if pin is present in one of the ignored vectors
 //-----------------------------------------------------------------------------
-bool pinNotPresent(int *ignored_vector, int vector_size, int pinNumber)
+int pinNotPresent(int *ignored_vector, int vector_size, int pinNumber)
 {
     for (int i = 0; i < vector_size; i++)
     {
         if (ignored_vector[i] == pinNumber)
-            return false;
+            return 0;
     }
     
-    return true;
+    return 1;
 }
 void handleWriteAction(cJSON *root){
 	printf("远端向树莓派输入数据");
