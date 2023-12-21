@@ -319,7 +319,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 	
-	int port = 2022;
+	int port = 1502;
 	char *ip = (char *)"127.0.0.1";
 	
 	ret = tcp_server_bind_and_listen(sockfd, ip, port, 1024);
