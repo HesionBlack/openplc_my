@@ -30,7 +30,6 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <string.h>
-
 #include "ladder.h"
 #include "custom_layer.h"
 #include "../cJSON.h"
@@ -59,7 +58,7 @@ void toOriginalArray(int sparse[][3], int original[][MAX_COLS]) {
     }
 }
 // 计算非零元素数量的函数
-int countNonZeroElements(IEC_BOOL arr[][MAX_COLS], int rows, int cols) {
+int countNonZeroElements(IEC_BOOL* arr[][MAX_COLS], int rows, int cols) {
     int count = 0;
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
@@ -71,7 +70,7 @@ int countNonZeroElements(IEC_BOOL arr[][MAX_COLS], int rows, int cols) {
     return count;
 }
 // 二维数组转稀疏数组的函数
-void toSparseArray(IEC_BOOL original[][MAX_COLS], int rows, int cols, int sparse[][3]) {
+void toSparseArray(IEC_BOOL* original[][MAX_COLS], int rows, int cols, int sparse[][3]) {
     int k = 1;  // 稀疏数组的行计数器，从1开始因为0行用于存储元数据
     sparse[0][0] = rows;
     sparse[0][1] = cols;
@@ -142,7 +141,7 @@ void updateBuffersIn()
 
 	//堵塞接收
 	memset(recvBuf, 0, sizeof(recvBuf));//清空
-	recvBytes = tcp_blocking_rcv(sockfd, recvBuf, sizeof(recvBuf));//堵塞接收
+	recvBytes = tcp_blocking_rcv(sockfAd, recvBuf, sizeof(recvBuf));//堵塞接收
 	if (0 > recvBytes) {//接收失败
 		sprintf(log_msg, "接收失败\n");
 		log(log_msg);	
