@@ -48,7 +48,7 @@ int outBufferPinMask[MAX_OUTPUT] =	{ 15, 16, 4, 5, 6, 10, 11, 26, 27, 28, 29 };
 //output of the RaspberryPi
 int analogOutBufferPinMask[MAX_ANALOG_OUT] = { 1 };
 // 创建一个二维数组
-int array[1024][8];
+int *array[1024][8];
 #define MAX_ROWS 1024
 #define MAX_COLS 8
 pthread_mutex_t bufferLock; //mutex for the internal buffers
@@ -80,7 +80,7 @@ void updateBuffersOut()
 	for (int i = 0; i < MAX_OUTPUT; i++)
 	{
 	    if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), outBufferPinMask[i]))
-    		digitalWrite(outBufferPinMask[i], array[i/8][i%8]);
+    		digitalWrite(outBufferPinMask[i], *array[i/8][i%8]);
 	}
 
 	//ANALOG OUT (PWM)
@@ -117,7 +117,7 @@ void handleWriteAction(cJSON *root){
     for (int i =1; i < rows; i++) {
         int x = sparse[0];
         int y = sparse[1];
-        array[x][y]=(uint8_t)sparse[2];
+        *array[x][y]=(uint8_t)sparse[2];
     }    
     updateBuffersOut();
 }
@@ -166,7 +166,7 @@ void updateBuffersIn()
 	for (int i = 0; i < MAX_INPUT; i++)
 	{
 	    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), inBufferPinMask[i]))
-    		array[i/8][i%8] = digitalRead(inBufferPinMask[i]);
+    		*array[i/8][i%8] = digitalRead(inBufferPinMask[i]);
 	}
 
 	pthread_mutex_unlock(&bufferLock); //unlock mutex
@@ -175,11 +175,11 @@ void updateBuffersIn()
 
 
 // 函数来计算非零元素的数量
-int countNonZeroElements(int arr[MAX_ROWS][MAX_COLS], int rows, int cols) {
+int countNonZeroElements(int *arr[MAX_ROWS][MAX_COLS], int rows, int cols) {
     int count = 0;
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
-            if (arr[i][j] != 0) {
+            if (*arr[i][j] != 0) {
                 count++;
             }
         }
@@ -319,7 +319,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 	
-	int port = 1502;
+	int port = 8081;
 	char *ip = (char *)"127.0.0.1";
 	
 	ret = tcp_server_bind_and_listen(sockfd, ip, port, 1024);
