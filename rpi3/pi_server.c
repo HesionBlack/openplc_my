@@ -66,6 +66,32 @@ int pinNotPresent(int *ignored_vector, int vector_size, int pinNumber)
     
     return 1;
 }
+//-----------------------------------------------------------------------------
+// This function is called by the OpenPLC in a loop. Here the internal buffers
+// must be updated to reflect the actual state of the output pins. The mutex buffer_lock
+// must be used to protect access to the buffers on a threaded environment.
+//-----------------------------------------------------------------------------
+void updateBuffersOut()
+{
+    printf("远端向树莓派输入数据");
+	pthread_mutex_lock(&bufferLock); //lock mutex
+
+	//OUTPUT
+	for (int i = 0; i < MAX_OUTPUT; i++)
+	{
+	    if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), outBufferPinMask[i]))
+    		digitalWrite(outBufferPinMask[i], array[i/8][i%8]);
+	}
+
+	//ANALOG OUT (PWM)
+	for (int i = 0; i < MAX_ANALOG_OUT; i++)
+	{
+	    if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), i))
+    		pwmWrite(analogOutBufferPinMask[i], (int_output[i] / 64));
+	}
+
+	pthread_mutex_unlock(&bufferLock); //unlock mutex
+}
 void handleWriteAction(cJSON *root){
 	printf("远端向树莓派输入数据");
     cJSON* intOutput = cJSON_GetObjectItem(root, "int_output"); 
@@ -95,7 +121,6 @@ void handleWriteAction(cJSON *root){
     }    
     updateBuffersOut();
 }
-
 //-----------------------------------------------------------------------------
 // This function is called by the main OpenPLC routine when it is initializing.
 // Hardware initialization procedures should be here.
@@ -147,32 +172,7 @@ void updateBuffersIn()
 	pthread_mutex_unlock(&bufferLock); //unlock mutex
 }
 
-//-----------------------------------------------------------------------------
-// This function is called by the OpenPLC in a loop. Here the internal buffers
-// must be updated to reflect the actual state of the output pins. The mutex buffer_lock
-// must be used to protect access to the buffers on a threaded environment.
-//-----------------------------------------------------------------------------
-void updateBuffersOut()
-{
-    printf("远端向树莓派输入数据");
-	pthread_mutex_lock(&bufferLock); //lock mutex
 
-	//OUTPUT
-	for (int i = 0; i < MAX_OUTPUT; i++)
-	{
-	    if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), outBufferPinMask[i]))
-    		digitalWrite(outBufferPinMask[i], array[i/8][i%8]);
-	}
-
-	//ANALOG OUT (PWM)
-	for (int i = 0; i < MAX_ANALOG_OUT; i++)
-	{
-	    if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), i))
-    		pwmWrite(analogOutBufferPinMask[i], (int_output[i] / 64));
-	}
-
-	pthread_mutex_unlock(&bufferLock); //unlock mutex
-}
 
 // 函数来计算非零元素的数量
 int countNonZeroElements(int arr[MAX_ROWS][MAX_COLS], int rows, int cols) {
