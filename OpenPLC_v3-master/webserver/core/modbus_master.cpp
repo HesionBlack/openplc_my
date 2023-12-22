@@ -684,8 +684,6 @@ void initializeMB()
 void updateBuffersIn_MB()
 {   
     unsigned char log_msg[1000];
-    sprintf(log_msg, "Be Called\n");
-    log(log_msg); 
     pthread_mutex_lock(&ioLock);
     for (int i = 0; i < MAX_MB_IO; i++)
     {

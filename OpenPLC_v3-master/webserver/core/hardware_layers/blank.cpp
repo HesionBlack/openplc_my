@@ -34,13 +34,15 @@
 #include "custom_layer.h"
 #include "../cJSON.h"
 #include "../tcp_spi.h"
-#define SERVER_ADDR "192.168.43.215"
-#define SERVER_PORT "1502"
 #define MAX_ROWS 1024
 #define MAX_COLS 8
 unsigned char log_msg[1000];
 int sockfd = -1;//客户端socket通信句柄
 int tcp_client_connectflag = 0;//客户端socket通信连接标志
+pthread_t thread_client_read_pi,thread_client_connect_holder,thread_client_write_data_to_pi;
+
+char server_ip[16] = "127.0.0.1";//服务器IP
+int server_port = 8081;//服务器端口
 // 还原稀疏数组为原始的二维数组
 void toOriginalArray(int sparse[][3], int original[][MAX_COLS]) {
     // 首先初始化原始数组为零
@@ -90,7 +92,7 @@ void toSparseArray(IEC_BOOL* original[][MAX_COLS], int rows, int cols, int spars
     }
 }
 void *wirteDataToPi(void *ptr){
-	pthread_mutex_lock(&bufferLock); //lock mutex
+	pthread_mutex_lock(&ioLock); //lock mutex
 	char* json_str;
 
 	if(tcp_client_connectflag==0){
@@ -128,7 +130,7 @@ void *wirteDataToPi(void *ptr){
 	}
 	//堵塞接收
 	memset(recvBuf, 0, sizeof(recvBuf));//清空
-	recvBytes = tcp_blocking_rcv(sockfd, recvBuf, sizeof(recvBuf));//堵塞接收
+	recvBytes = tcp_noblocking_rcv(sockfd, recvBuf, sizeof(recvBuf),3,1000000);//堵塞接收
 	if (0 > recvBytes) {//接收失败
 		sprintf(log_msg, "接收失败\n");
 		log(log_msg);	
@@ -139,7 +141,7 @@ void *wirteDataToPi(void *ptr){
 		sprintf(log_msg, "收到信息:%s\n",recvBuf);
 		log(log_msg);	
 	}
-	pthread_mutex_unlock(&bufferLock); //unlock mutex
+	pthread_mutex_unlock(&ioLock); //unlock mutex
 }
 
 void *readPiData(void *ptr){
@@ -152,7 +154,7 @@ void *readPiData(void *ptr){
 	}
 	sprintf(log_msg, "从树莓派远程获取针脚数据...!\n");
 	log(log_msg);		
-	pthread_mutex_lock(&bufferLock); //lock mutex
+    pthread_mutex_lock(&ioLock);
 	int ret = 0;
 	char recvBuf[1024*8] = {0};
 	int recvBytes = 0;
@@ -169,7 +171,7 @@ void *readPiData(void *ptr){
 	}
 	//堵塞接收
 	memset(recvBuf, 0, sizeof(recvBuf));//清空
-	recvBytes = tcp_blocking_rcv(sockfd, recvBuf, sizeof(recvBuf));//堵塞接收
+	recvBytes = tcp_noblocking_rcv(sockfd, recvBuf, sizeof(recvBuf),3,1000000);//堵塞接收
 	if (0 > recvBytes) {//接收失败
 		sprintf(log_msg, "接收失败\n");
 		log(log_msg);	
@@ -207,31 +209,33 @@ void *readPiData(void *ptr){
 		cJSON_Delete(root);	
 		tcp_close(sockfd);			
 	}
-	pthread_mutex_unlock(&bufferLock); //unlock mutex
+    pthread_mutex_unlock(&ioLock);
 }
 void *fun_client_connect(void *ptr){
+	sprintf(log_msg, "开始连接。。。。\n");
+	log(log_msg);		
 	while (1) {
 		if (0 == tcp_client_connectflag) {//未连接就不断中断重连
-	
-			if (sockfd > 0) {  //sockfd等于0时不能关，防止把文件句柄0关掉，导致scanf()函数输入不了
-				tcp_close(sockfd);
-			}
-			
 			sockfd = tcp_creat_socket();//创建socket
 			if (0 > sockfd) {
-				printf("socket创建失败...!\n");
+				sprintf(log_msg, "socket创建失败....!\n");
+				log(log_msg);				
 				sleep(2);
 				continue;
 			}
 			
 			printf("请求连接...\n");
+
 			if (0 > tcp_client_connect(sockfd, server_ip, server_port)) {
 				printf("连接失败...重连中...\n");
+				sprintf(log_msg, "连接失败...重连中...\n");
+				log(log_msg);	
 				sleep(2);
 				continue;
 			} else {
 				tcp_client_connectflag = 1;
-				printf("连接成功!\n");
+				sprintf(log_msg, "连接成功!\n");
+				log(log_msg);
 			}	
 		} else {
 			sleep(1);
@@ -247,12 +251,13 @@ void *fun_client_connect(void *ptr){
 void initializeHardware()
 {
 	int ret = 0;
-	pthread_t thread_client_connect_holder;		
-	//创建一个维持连接的线程
-	ret = pthread_create(&thread_client_connect_holder, NULL, fun_client_connect, NULL);
-	if (ret < 0) {
-		printf("creat thread_client_rcv is fail!\n");
-		return -1;
+	if(thread_client_connect_holder == NULL){
+		//创建一个维持连接的线程
+		ret = pthread_create(&thread_client_connect_holder, NULL, fun_client_connect, NULL);
+		if (ret < 0) {
+			printf("creat thread_client_rcv is fail!\n");
+			return -1;
+		}	
 	}	
 }
 
@@ -271,13 +276,16 @@ void finalizeHardware()
 //-----------------------------------------------------------------------------
 void updateBuffersIn()
 {
-	pthread_t thread_client_read_pi;
+
 	int ret = 0;
-	ret = pthread_create(&thread_client_read_pi, NULL, readPiData, NULL);
-	if (ret < 0) {
-		printf("creat thread_client_rcv is fail!\n");
-		return -1;
+	if(thread_client_read_pi==NULL){
+		ret = pthread_create(&thread_client_read_pi, NULL, readPiData, NULL);
+		if (ret < 0) {
+			printf("creat thread_client_rcv is fail!\n");
+			return -1;
+		}
 	}
+
 }
 
 //-----------------------------------------------------------------------------
@@ -287,12 +295,14 @@ void updateBuffersIn()
 //-----------------------------------------------------------------------------
 void updateBuffersOut()
 {
-	pthread_t thread_client_write_data_to_pi;
+
 	int ret = 0;
-	ret = pthread_create(&thread_client_write_data_to_pi, NULL, wirteDataToPi, NULL);
-	if (ret < 0) {
-		printf("creat thread_client_rcv is fail!\n");
-		return -1;
-	}
+	if(thread_client_write_data_to_pi==NULL){
+		ret = pthread_create(&thread_client_write_data_to_pi, NULL, wirteDataToPi, NULL);
+		if (ret < 0) {
+			printf("creat thread_client_rcv is fail!\n");
+			return -1;
+		}
+	}	
 }
 

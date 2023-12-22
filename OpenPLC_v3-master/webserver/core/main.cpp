@@ -362,8 +362,6 @@ int main(int argc,char **argv)
   
         updateBuffersIn_MB(); //update input image table with data from slave devices
         handleSpecialFunctions();
-        sprintf(log_msg, "execute plc program logic\n");
-        log(log_msg);
 		config_run__(__tick++); // execute plc program logic
 		updateCustomOut();
         updateBuffersOut_MB(); //update slave devices with data from the output image table
