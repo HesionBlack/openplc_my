@@ -66,7 +66,7 @@ int countNonZeroElements(IEC_BOOL* arr[][MAX_COLS], int rows, int cols) {
     int count = 0;
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
-            if (arr[i][j] != 0) {
+            if (*arr[i][j] != 0) {
                 count++;
             }
         }
@@ -82,17 +82,17 @@ void toSparseArray(IEC_BOOL* original[][MAX_COLS], int rows, int cols, int spars
 
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
-            if (original[i][j] != 0) {
+            if (*original[i][j] != 0) {
                 sparse[k][0] = i;
                 sparse[k][1] = j;
-                sparse[k][2] = original[i][j];
+                sparse[k][2] = *original[i][j];
                 k++;
             }
         }
     }
 }
-void *wirteDataToPi(void *ptr){
-	pthread_mutex_lock(&ioLock); //lock mutex
+void *wirteDataToPi(){
+	// pthread_mutex_lock(&ioLock); //lock mutex
 	char* json_str;
 
 	if(tcp_client_connectflag==0){
@@ -102,7 +102,7 @@ void *wirteDataToPi(void *ptr){
 	sprintf(log_msg, "往树莓派写数据...\n");
 	log(log_msg);	
 	int ret = 0;
-	char recvBuf[1024*8] = {0};
+	char recvBuf[1024*30] = {0};
 	int recvBytes = 0;
 	cJSON *root = cJSON_CreateObject();
     cJSON *matrix = cJSON_CreateArray();
@@ -124,13 +124,12 @@ void *wirteDataToPi(void *ptr){
 	printf("正在发送\n");
 	if (0 > tcp_send(sockfd, json_str, strlen(json_str))) {//如果含有0x00不能用strlen
 		printf("发送失败...！\n");
-		tcp_client_connectflag = 0;
 	} else {
 		printf("发送成功\n");
 	}
 	//堵塞接收
 	memset(recvBuf, 0, sizeof(recvBuf));//清空
-	recvBytes = tcp_noblocking_rcv(sockfd, recvBuf, sizeof(recvBuf),3,1000000);//堵塞接收
+	recvBytes = tcp_blocking_rcv(sockfd, recvBuf, sizeof(recvBuf));//堵塞接收
 	if (0 > recvBytes) {//接收失败
 		sprintf(log_msg, "接收失败\n");
 		log(log_msg);	
@@ -141,10 +140,10 @@ void *wirteDataToPi(void *ptr){
 		sprintf(log_msg, "收到信息:%s\n",recvBuf);
 		log(log_msg);	
 	}
-	pthread_mutex_unlock(&ioLock); //unlock mutex
+	// pthread_mutex_unlock(&ioLock); //unlock mutex
 }
 
-void *readPiData(void *ptr){
+void *readPiData(){
 	//从树莓派远程获取针脚数据
 
 	if(tcp_client_connectflag==0){
@@ -154,9 +153,9 @@ void *readPiData(void *ptr){
 	}
 	sprintf(log_msg, "从树莓派远程获取针脚数据...!\n");
 	log(log_msg);		
-    pthread_mutex_lock(&ioLock);
+    // pthread_mutex_lock(&ioLock);
 	int ret = 0;
-	char recvBuf[1024*8] = {0};
+	char recvBuf[1024*30] = {0};
 	int recvBytes = 0;
 	char* json_str;
 	cJSON *root = cJSON_CreateObject();
@@ -171,7 +170,7 @@ void *readPiData(void *ptr){
 	}
 	//堵塞接收
 	memset(recvBuf, 0, sizeof(recvBuf));//清空
-	recvBytes = tcp_noblocking_rcv(sockfd, recvBuf, sizeof(recvBuf),3,1000000);//堵塞接收
+	recvBytes = tcp_blocking_rcv(sockfd, recvBuf, sizeof(recvBuf));
 	if (0 > recvBytes) {//接收失败
 		sprintf(log_msg, "接收失败\n");
 		log(log_msg);	
@@ -207,9 +206,8 @@ void *readPiData(void *ptr){
 		}
 		// 清理JSON对象
 		cJSON_Delete(root);	
-		tcp_close(sockfd);			
 	}
-    pthread_mutex_unlock(&ioLock);
+    // pthread_mutex_unlock(&ioLock);
 }
 void *fun_client_connect(void *ptr){
 	sprintf(log_msg, "开始连接。。。。\n");
@@ -276,16 +274,7 @@ void finalizeHardware()
 //-----------------------------------------------------------------------------
 void updateBuffersIn()
 {
-
-	int ret = 0;
-	if(thread_client_read_pi==NULL){
-		ret = pthread_create(&thread_client_read_pi, NULL, readPiData, NULL);
-		if (ret < 0) {
-			printf("creat thread_client_rcv is fail!\n");
-			return -1;
-		}
-	}
-
+	readPiData();
 }
 
 //-----------------------------------------------------------------------------
@@ -295,14 +284,6 @@ void updateBuffersIn()
 //-----------------------------------------------------------------------------
 void updateBuffersOut()
 {
-
-	int ret = 0;
-	if(thread_client_write_data_to_pi==NULL){
-		ret = pthread_create(&thread_client_write_data_to_pi, NULL, wirteDataToPi, NULL);
-		if (ret < 0) {
-			printf("creat thread_client_rcv is fail!\n");
-			return -1;
-		}
-	}	
+	wirteDataToPi();
 }
 

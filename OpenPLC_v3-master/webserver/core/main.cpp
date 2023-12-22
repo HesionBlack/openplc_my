@@ -221,7 +221,17 @@ u_int32_t *dint_output_call_back(int a){ return dint_output[a]; }
 u_int64_t *lint_input_call_back(int a){ return lint_input[a]; }
 u_int64_t *lint_output_call_back(int a){ return lint_output[a]; }
 void logger_callback(unsigned char *msg){ log(msg);}
-
+void printfBoolInput(){
+    for (int i = 0; i < BUFFER_SIZE; i++)
+    {
+        for (int j = 0; j < 8; j++)
+        {
+            if(*bool_output[i][j] != NULL &&*bool_output[i][j]==1){
+              printf("%d %d %d",i,j,*bool_output[i][j]);
+            }
+        }
+    }
+}
 int main(int argc,char **argv)
 {
     // Define the max/min/avg/total cycle and latency variables used in REAL-TIME computation(in nanoseconds)
@@ -362,7 +372,11 @@ int main(int argc,char **argv)
   
         updateBuffersIn_MB(); //update input image table with data from slave devices
         handleSpecialFunctions();
+        printf("before\n");
+        printfBoolInput();
 		config_run__(__tick++); // execute plc program logic
+        printf("after\n\n");        
+        printfBoolInput();
 		updateCustomOut();
         updateBuffersOut_MB(); //update slave devices with data from the output image table
 		pthread_mutex_unlock(&bufferLock); //unlock mutex
